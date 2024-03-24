@@ -1,4 +1,10 @@
 import React from "./core/React.js"
-const App = <div id="app">hello mini-react</div>
-
+let App = (
+  <div className="main">
+    <div>
+      <span>hello-</span>
+      <span>mini-react</span>
+    </div>
+  </div>
+)
 export default App

@@ -23,23 +23,68 @@ function createTextNode(text) {
     },
   }
 }
-
+let nextWorkOfUnit = null
 function render(el, container) {
-  const dom = el.type === 'TEXT_ELEMENT' ? document.createTextNode('') : document.createElement(el.type)
+  nextWorkOfUnit = {
+    dom: container,
+    props: {
+      children: [el],
+    },
+  }
+  requestIdleCallback(workLoop)
+}
+function workLoop(IdleDeadLine) {
+  let shouldYield = false
+  while (!shouldYield && nextWorkOfUnit) {
+    nextWorkOfUnit = performWorkOfUnit(nextWorkOfUnit)
+    shouldYield = IdleDeadLine.timeRemaining() < 1
+  }
+  requestIdleCallback(workLoop)
+}
 
-  for (const [key, value] of Object.entries(el.props)) {
+function performWorkOfUnit(work) {
+  if (!work.dom) {
+    // 1.创建dom
+    const dom = work.type === 'TEXT_ELEMENT' ? document.createTextNode('') : document.createElement(work.type)
+    work.dom = dom
+    work.parent.dom.append(dom)
+  }
+  // 2.处理props
+  for (const [key, value] of Object.entries(work.props)) {
     if (key !== 'children') {
-      dom[key] = value
+      work.dom[key] = value
     }
   }
-
-  const children = el.props.children
-  children.forEach(child => {
-    render(child, dom)
+  // 3.转换链表，设置指针
+  let children = work.props.children
+  let prevChild = null
+  children.forEach((child, index) => {
+    const newWork = {
+      type: child.type,
+      props: child.props,
+      parent: work,
+      child: null,
+      sibling: null,
+      dom: null,
+    }
+    if (index === 0) {
+      work.child = newWork
+    } else {
+      prevChild.sibling = newWork
+    }
+    prevChild = newWork
+    console.log(work)
   })
-
-  container.append(dom)
+  // 4.返回下一个任务
+  if (work.child) {
+    return work.child
+  }
+  if (work.sibling) {
+    return work.sibling
+  }
+  return work.parent?.sibling
 }
+
 
 const React = {
   render,
