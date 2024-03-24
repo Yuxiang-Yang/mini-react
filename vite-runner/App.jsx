@@ -2,9 +2,9 @@ import React from "./core/React.js"
 let App = (
   <div className="main">
     <div>
-      <span>hello-</span>
-      <span>mini-react</span>
+      <span>hello</span>
     </div>
+    <span>mini-react</span>
   </div>
 )
 export default App

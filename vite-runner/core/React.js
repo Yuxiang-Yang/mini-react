@@ -73,16 +73,18 @@ function performWorkOfUnit(work) {
       prevChild.sibling = newWork
     }
     prevChild = newWork
-    console.log(work)
   })
   // 4.返回下一个任务
   if (work.child) {
     return work.child
   }
-  if (work.sibling) {
-    return work.sibling
+  let nextWork = work
+  while (nextWork) {
+    if (nextWork.sibling) {
+      return nextWork.sibling
+    }
+    nextWork = nextWork.parent
   }
-  return work.parent?.sibling
 }
 
 
