@@ -41,44 +41,49 @@ function workLoop(IdleDeadLine) {
   }
   requestIdleCallback(workLoop)
 }
-
-function performWorkOfUnit(work) {
-  if (!work.dom) {
-    // 1.创建dom
-    const dom = work.type === 'TEXT_ELEMENT' ? document.createTextNode('') : document.createElement(work.type)
-    work.dom = dom
-    work.parent.dom.append(dom)
-  }
-  // 2.处理props
-  for (const [key, value] of Object.entries(work.props)) {
+function createDOM(fiber) {
+  return fiber.type === 'TEXT_ELEMENT' ? document.createTextNode('') : document.createElement(fiber.type)
+}
+function updateProps(dom, props) {
+  for (const [key, value] of Object.entries(props)) {
     if (key !== 'children') {
-      work.dom[key] = value
+      dom[key] = value
     }
   }
-  // 3.转换链表，设置指针
-  let children = work.props.children
+}
+function initChildren(fiber) {
+  let children = fiber.props.children
   let prevChild = null
   children.forEach((child, index) => {
     const newWork = {
       type: child.type,
       props: child.props,
-      parent: work,
+      parent: fiber,
       child: null,
       sibling: null,
       dom: null,
     }
     if (index === 0) {
-      work.child = newWork
+      fiber.child = newWork
     } else {
       prevChild.sibling = newWork
     }
     prevChild = newWork
   })
-  // 4.返回下一个任务
-  if (work.child) {
-    return work.child
+}
+function performWorkOfUnit(fiber) {
+  if (!fiber.dom) {
+    const dom = createDOM(fiber)
+    fiber.dom = dom
+    fiber.parent.dom.append(dom)
+    updateProps(dom, fiber.props)
   }
-  let nextWork = work
+  initChildren(fiber)
+  // 4.返回下一个任务
+  if (fiber.child) {
+    return fiber.child
+  }
+  let nextWork = fiber
   while (nextWork) {
     if (nextWork.sibling) {
       return nextWork.sibling
