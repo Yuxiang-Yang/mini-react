@@ -23,6 +23,7 @@ function createTextNode(text) {
     },
   }
 }
+let root = null
 let nextWorkOfUnit = null
 function render(el, container) {
   nextWorkOfUnit = {
@@ -31,6 +32,7 @@ function render(el, container) {
       children: [el],
     },
   }
+  root = nextWorkOfUnit
   requestIdleCallback(workLoop)
 }
 function workLoop(IdleDeadLine) {
@@ -39,7 +41,20 @@ function workLoop(IdleDeadLine) {
     nextWorkOfUnit = performWorkOfUnit(nextWorkOfUnit)
     shouldYield = IdleDeadLine.timeRemaining() < 1
   }
+  if (!nextWorkOfUnit && root) {
+    commitRoot()
+  }
   requestIdleCallback(workLoop)
+}
+function commitRoot() {
+  commitWork(root.child)
+  root = null
+}
+function commitWork(fiber) {
+  if (!fiber) return
+  fiber.parent.dom.append(fiber.dom)
+  commitWork(fiber.child)
+  commitWork(fiber.sibling)
 }
 function createDOM(fiber) {
   return fiber.type === 'TEXT_ELEMENT' ? document.createTextNode('') : document.createElement(fiber.type)
@@ -75,7 +90,7 @@ function performWorkOfUnit(fiber) {
   if (!fiber.dom) {
     const dom = createDOM(fiber)
     fiber.dom = dom
-    fiber.parent.dom.append(dom)
+    // fiber.parent.dom.append(dom)
     updateProps(dom, fiber.props)
   }
   initChildren(fiber)
@@ -92,10 +107,9 @@ function performWorkOfUnit(fiber) {
   }
 }
 
-
 const React = {
   render,
-  createElement
+  createElement,
 }
 
 export default React
