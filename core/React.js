@@ -20,17 +20,17 @@ function createTextNode(text) {
     },
   }
 }
-let root = null
+let wipRoot = null
 let oldRoot = null
 let nextWorkOfUnit = null
 function render(el, container) {
-  nextWorkOfUnit = {
+  wipRoot = {
     dom: container,
     props: {
       children: [el],
     },
   }
-  root = nextWorkOfUnit
+  nextWorkOfUnit = wipRoot
 }
 function workLoop(IdleDeadLine) {
   let shouldYield = false
@@ -38,15 +38,15 @@ function workLoop(IdleDeadLine) {
     nextWorkOfUnit = performWorkOfUnit(nextWorkOfUnit)
     shouldYield = IdleDeadLine.timeRemaining() < 1
   }
-  if (!nextWorkOfUnit && root) {
+  if (!nextWorkOfUnit && wipRoot) {
     commitRoot()
   }
   requestIdleCallback(workLoop)
 }
 function commitRoot() {
-  commitWork(root.child)
-  oldRoot = root
-  root = null
+  commitWork(wipRoot.child)
+  oldRoot = wipRoot
+  wipRoot = null
 }
 function commitWork(fiber) {
   if (!fiber) return
@@ -90,7 +90,7 @@ function updateProps(dom, newProps, oldProps) {
     }
   })
 }
-function initChildren(fiber, children) {
+function reconcileChildren(fiber, children) {
   let oldFiber = fiber.alternate?.child
   let prevChild = null
   children.forEach((child, index) => {
@@ -133,7 +133,7 @@ function initChildren(fiber, children) {
 }
 function updateFunctionComponent(fiber) {
   const children = [fiber.type(fiber.props)]
-  initChildren(fiber, children)
+  reconcileChildren(fiber, children)
 }
 function updateHostComponent(fiber) {
   if (!fiber.dom) {
@@ -143,7 +143,7 @@ function updateHostComponent(fiber) {
   }
 
   const children = fiber.props.children
-  initChildren(fiber, children)
+  reconcileChildren(fiber, children)
 }
 function performWorkOfUnit(fiber) {
   const isFunctionComponent = typeof fiber.type === 'function'
@@ -168,12 +168,12 @@ function performWorkOfUnit(fiber) {
 requestIdleCallback(workLoop)
 
 function update() {
-  nextWorkOfUnit = {
+  wipRoot = {
     dom: oldRoot.dom,
     props: oldRoot.props,
     alternate: oldRoot,
   }
-  root = nextWorkOfUnit
+  nextWorkOfUnit = wipRoot
 }
 
 const React = {
