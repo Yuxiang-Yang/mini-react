@@ -1,6 +1,14 @@
 import React from "./core/React.js"
-function Counter({ num }) {
-  return <div>count: {num}</div>
+function Counter({ onClick, num }) {
+  return (
+    <div>
+      <span>count: {num}</span>
+      <button onClick={onClick}>add</button>
+    </div>
+  )
+}
+function handleClick() {
+  console.log('clicked!!')
 }
 function App() {
   return (
@@ -9,8 +17,8 @@ function App() {
         <span>hello</span>
       </div>
       <span>mini-react</span>
-      <Counter num={10}></Counter>
-      <Counter num={20}></Counter>
+      <Counter num={10} onClick={handleClick}></Counter>
+      <button onClick={handleClick}>click</button>
     </div>
   )
 }

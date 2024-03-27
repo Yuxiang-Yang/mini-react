@@ -68,6 +68,10 @@ function createDOM(fiber) {
 function updateProps(dom, props) {
   for (const [key, value] of Object.entries(props)) {
     if (key !== 'children') {
+      if (key.startsWith('on')) {
+        const eventType = key.slice(2).toLowerCase()
+        dom.addEventListener(eventType, value)
+      }
       dom[key] = value
     }
   }
