@@ -20,9 +20,10 @@ function createTextNode(text) {
     },
   }
 }
-let wipRoot = null
-let oldRoot = null
-let nextWorkOfUnit = null
+let wipRoot = null //现在的root节点
+let oldRoot = null //之前的root节点
+let nextWorkOfUnit = null //下一个要操作的fiber
+let deletions = [] //要删除的节点
 function render(el, container) {
   wipRoot = {
     dom: container,
@@ -32,6 +33,7 @@ function render(el, container) {
   }
   nextWorkOfUnit = wipRoot
 }
+
 function workLoop(IdleDeadLine) {
   let shouldYield = false
   while (!shouldYield && nextWorkOfUnit) {
@@ -44,13 +46,29 @@ function workLoop(IdleDeadLine) {
   requestIdleCallback(workLoop)
 }
 function commitRoot() {
+  deletions.forEach(commitDeletion)
+  deletions = []
   commitWork(wipRoot.child)
   oldRoot = wipRoot
   wipRoot = null
 }
+
+function commitDeletion(fiber) {
+  //对函数组件做特殊处理
+  if (fiber.dom) {
+    let fiberParent = fiber.parent
+    while (!fiberParent.dom) {
+      fiberParent = fiberParent.parent
+    }
+    fiberParent.dom.removeChild(fiber.dom)
+  } else {
+    commitDeletion(fiber.child)
+  }
+}
+
 function commitWork(fiber) {
   if (!fiber) return
-
+  //对函数组件做特殊处理
   let fiberParent = fiber.parent
   while (!fiberParent.dom) {
     fiberParent = fiberParent.parent
@@ -66,9 +84,11 @@ function commitWork(fiber) {
   commitWork(fiber.child)
   commitWork(fiber.sibling)
 }
+
 function createDOM(fiber) {
   return fiber.type === 'TEXT_ELEMENT' ? document.createTextNode('') : document.createElement(fiber.type)
 }
+
 function updateProps(dom, newProps, oldProps) {
   Object.keys(oldProps).forEach(key => {
     if (key !== 'children') {
@@ -90,6 +110,7 @@ function updateProps(dom, newProps, oldProps) {
     }
   })
 }
+
 function reconcileChildren(fiber, children) {
   let oldFiber = fiber.alternate?.child
   let prevChild = null
@@ -117,6 +138,9 @@ function reconcileChildren(fiber, children) {
         dom: null,
         effectTag: 'placement',
       }
+      if (oldFiber) {
+        deletions.push(oldFiber)
+      }
     }
 
     if (oldFiber) {
@@ -130,11 +154,18 @@ function reconcileChildren(fiber, children) {
     }
     prevChild = newFiber
   })
+  // 新比旧少，删除多余的老节点
+  while (oldFiber) {
+    deletions.push(oldFiber)
+    oldFiber = oldFiber.sibling
+  }
 }
+
 function updateFunctionComponent(fiber) {
   const children = [fiber.type(fiber.props)]
   reconcileChildren(fiber, children)
 }
+
 function updateHostComponent(fiber) {
   if (!fiber.dom) {
     const dom = createDOM(fiber)
@@ -145,6 +176,7 @@ function updateHostComponent(fiber) {
   const children = fiber.props.children
   reconcileChildren(fiber, children)
 }
+
 function performWorkOfUnit(fiber) {
   const isFunctionComponent = typeof fiber.type === 'function'
   if (isFunctionComponent) {
