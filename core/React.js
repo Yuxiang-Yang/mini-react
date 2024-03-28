@@ -22,6 +22,7 @@ function createTextNode(text) {
 }
 let wipRoot = null //现在的root节点
 let oldRoot = null //之前的root节点
+let wipFiber = null //现在的fiber
 let nextWorkOfUnit = null //下一个要操作的fiber
 let deletions = [] //要删除的节点
 function render(el, container) {
@@ -38,6 +39,10 @@ function workLoop(IdleDeadLine) {
   let shouldYield = false
   while (!shouldYield && nextWorkOfUnit) {
     nextWorkOfUnit = performWorkOfUnit(nextWorkOfUnit)
+    //只执行有变化的函数组件
+    if (wipRoot?.sibling?.type === nextWorkOfUnit?.type) {
+      nextWorkOfUnit = null
+    }
     shouldYield = IdleDeadLine.timeRemaining() < 1
   }
   if (!nextWorkOfUnit && wipRoot) {
@@ -129,15 +134,19 @@ function reconcileChildren(fiber, children) {
         alternate: oldFiber,
       }
     } else {
-      newFiber = {
-        type: child.type,
-        props: child.props,
-        parent: fiber,
-        child: null,
-        sibling: null,
-        dom: null,
-        effectTag: 'placement',
+      //处理child为falsy的情况
+      if (child) {
+        newFiber = {
+          type: child.type,
+          props: child.props,
+          parent: fiber,
+          child: null,
+          sibling: null,
+          dom: null,
+          effectTag: 'placement',
+        }
       }
+
       if (oldFiber) {
         deletions.push(oldFiber)
       }
@@ -152,9 +161,12 @@ function reconcileChildren(fiber, children) {
     } else {
       prevChild.sibling = newFiber
     }
-    prevChild = newFiber
+    //处理child为falsy的情况,跳过该节点
+    if (newFiber) {
+      prevChild = newFiber
+    }
   })
-  // 新比旧少，删除多余的老节点
+  //新比旧少，删除多余的老节点
   while (oldFiber) {
     deletions.push(oldFiber)
     oldFiber = oldFiber.sibling
@@ -162,6 +174,7 @@ function reconcileChildren(fiber, children) {
 }
 
 function updateFunctionComponent(fiber) {
+  wipFiber = fiber
   const children = [fiber.type(fiber.props)]
   reconcileChildren(fiber, children)
 }
@@ -200,12 +213,15 @@ function performWorkOfUnit(fiber) {
 requestIdleCallback(workLoop)
 
 function update() {
-  wipRoot = {
-    dom: oldRoot.dom,
-    props: oldRoot.props,
-    alternate: oldRoot,
+  const currentFiber = wipFiber
+  //使用闭包保存当前组件所在的fiber
+  return () => {
+    wipRoot = {
+      ...currentFiber,
+      alternate: currentFiber,
+    }
+    nextWorkOfUnit = wipRoot
   }
-  nextWorkOfUnit = wipRoot
 }
 
 const React = {

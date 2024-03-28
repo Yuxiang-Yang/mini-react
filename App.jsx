@@ -1,7 +1,6 @@
 import React from "./core/React.js"
 let count = 0
 let showFoo = true
-
 function Counter({ onClick }) {
   const foo = (
     <div>
@@ -10,7 +9,6 @@ function Counter({ onClick }) {
       <div>222</div>
     </div>
   )
-
   const bar = <div>bar</div>
   return (
     <div>
@@ -18,26 +16,65 @@ function Counter({ onClick }) {
       <button onClick={onClick}>add</button>
       <div>{showFoo ? foo : bar}</div>
       <button onClick={handleFooShow}>toggleShowFoo</button>
+      <div>123{false && '222'}321</div>
     </div>
   )
 }
-function handleClick() {
-  console.log('clicked!!')
-  count++
-  React.update()
+let fooCount = 0
+function Foo() {
+  console.log('foo run')
+  const update = React.update()
+  function handleClick() {
+    fooCount++
+    update()
+  }
+  return (
+    <div>
+      <div>fooCount: {fooCount}</div>
+      <button onClick={handleClick}>add</button>
+    </div>
+  )
 }
+let barCount = 0
+function Bar() {
+  console.log('bar run')
+  const update = React.update()
+  function handleClick() {
+    barCount++
+    update()
+  }
+  return (
+    <div>
+      <div>barCount: {barCount}</div>
+      <button onClick={handleClick}>add</button>
+    </div>
+  )
+}
+
 function handleFooShow() {
   showFoo = !showFoo
   React.update()
 }
 function App() {
+  const update = React.update()
+  function handleClick() {
+    console.log('clicked!!')
+    count++
+    update()
+  }
   return (
     <div className="main">
-      <div>
+      {/* <div>
         <span>hello</span>
       </div>
       <span>mini-react</span>
-      <Counter onClick={handleClick}></Counter>
+      <div>{false && bar}</div>
+      <button onClick={handleFooShow}>toggleShowFoo</button> */}
+      {/* <Counter onClick={handleClick}></Counter> */}
+      {count}
+      <button onClick={handleClick}>add</button>
+      <Foo></Foo>
+      <Bar></Bar>
     </div>
   )
 }
