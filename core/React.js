@@ -246,6 +246,10 @@ function useState(initial) {
   currentFiber.stateHooks = stateHooks
 
   function setState(action) {
+    //state相同，不进行更新
+    const eagerState = typeof action === 'function' ? action(stateHook.state) : action
+    if (eagerState === stateHook.state) return
+
     //收集actions，批量更新
     stateHook.queue.push(typeof action === 'function' ? action : () => action)
 
