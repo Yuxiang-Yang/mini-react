@@ -20,17 +20,18 @@ function Counter({ onClick }) {
     </div>
   )
 }
-let fooCount = 0
 function Foo() {
   console.log('foo run')
-  const update = React.update()
+  const [count, setCount] = React.useState(10)
+  const [name, setName] = React.useState('Johnny Sliverhand')
   function handleClick() {
-    fooCount++
-    update()
+    setCount(count => count + 1)
+    setName(name => name + '!')
   }
   return (
     <div>
-      <div>fooCount: {fooCount}</div>
+      <div>fooCount: {count}</div>
+      <div>name: {name}</div>
       <button onClick={handleClick}>add</button>
     </div>
   )
@@ -71,10 +72,10 @@ function App() {
       <div>{false && bar}</div>
       <button onClick={handleFooShow}>toggleShowFoo</button> */}
       {/* <Counter onClick={handleClick}></Counter> */}
-      {count}
-      <button onClick={handleClick}>add</button>
+      {/* {count}
+      <button onClick={handleClick}>add</button> */}
       <Foo></Foo>
-      <Bar></Bar>
+      {/* <Bar></Bar> */}
     </div>
   )
 }
