@@ -26,7 +26,8 @@ function Foo() {
   const [name, setName] = React.useState('Johnny Sliverhand')
   function handleClick() {
     setCount(count => count + 1)
-    setName(name => name + '!')
+    // setName(name => name + '!')
+    setName('V')
   }
   return (
     <div>

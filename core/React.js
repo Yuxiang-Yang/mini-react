@@ -247,7 +247,7 @@ function useState(initial) {
 
   function setState(action) {
     //收集actions，批量更新
-    stateHook.queue.push(action)
+    stateHook.queue.push(typeof action === 'function' ? action : () => action)
 
     wipRoot = {
       ...currentFiber,
