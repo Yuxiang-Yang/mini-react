@@ -24,6 +24,16 @@ function Foo() {
   console.log('foo run')
   const [count, setCount] = React.useState(10)
   const [name, setName] = React.useState('Johnny Sliverhand')
+  
+  React.useEffect(() => {
+    console.log('init')
+    return () => console.log('cleanup0')
+  }, [])
+  React.useEffect(() => {
+    console.log('update')
+    return () => console.log('cleanup')
+  }, [count])
+
   function handleClick() {
     setCount(count => count + 1)
     // setName(name => name + '!')
