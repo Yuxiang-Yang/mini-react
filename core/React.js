@@ -47,6 +47,10 @@ function workLoop(IdleDeadLine) {
   }
   if (!nextWorkOfUnit && wipRoot) {
     commitRoot()
+    if (nextWorkOfUnit) {
+      //hooks引起dom更新后，重新渲染
+      wipRoot = oldRoot
+    }
   }
   requestIdleCallback(workLoop)
 }
@@ -79,7 +83,7 @@ function commitWork(fiber) {
   while (!fiberParent.dom) {
     fiberParent = fiberParent.parent
   }
-  if (fiber.effectTag === 'update') {
+  if (fiber.effectTag === 'update' && fiber.dom) {
     updateProps(fiber.dom, fiber.props, fiber.alternate.props)
   } else if (fiber.effectTag === 'placement') {
     if (fiber.dom) {
